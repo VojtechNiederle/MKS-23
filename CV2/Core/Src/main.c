@@ -35,6 +35,7 @@
 #define LED_TIME_SHORT 100
 #define LED_TIME_LONG 1000
 #define BUTTON_CHECK 40
+#define DEL 5
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,25 +70,39 @@ void blikac(void)
 }
 void tlacitko(void){
 	static uint32_t delay;
+	static uint32_t delay5;
+	static uint16_t debounce = 0xFFFF;
 	static uint32_t old_s2;
 	static uint32_t old_s1;
 	static uint32_t off_time;
 
-	if (Tick > delay + BUTTON_CHECK) {
-		uint32_t new_s2 = LL_GPIO_IsInputPinSet(S2_GPIO_Port, S2_Pin);
-		uint32_t new_s1 = LL_GPIO_IsInputPinSet(S1_GPIO_Port, S1_Pin);
-		if (old_s2 && !new_s2) { // falling edge
-			off_time = Tick + LED_TIME_SHORT;
-			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
+	if (Tick > delay5 + DEL) {
+		debounce <<= 1;
+		if (LL_GPIO_IsInputPinSet(S1_GPIO_Port, S1_Pin)){
+			debounce |= 1;
 		}
-		else if(old_s1 && !new_s1){
+		if (debounce ==  0x7FFF){
+			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
 			off_time = Tick + LED_TIME_LONG;
-			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		}
-		old_s2 = new_s2;
-		old_s1 = new_s1;
-		delay = Tick;
+		delay5 = Tick;
 	}
+
+//	if (Tick > delay + BUTTON_CHECK) {
+//		uint32_t new_s2 = LL_GPIO_IsInputPinSet(S2_GPIO_Port, S2_Pin);
+//		uint32_t new_s1 = LL_GPIO_IsInputPinSet(S1_GPIO_Port, S1_Pin);
+//		if (old_s2 && !new_s2) { // falling edge
+//			off_time = Tick + LED_TIME_SHORT;
+//			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
+//		}
+//		else if(old_s1 && !new_s1){
+//			off_time = Tick + LED_TIME_LONG;
+//			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
+//		}
+//		old_s2 = new_s2;
+//		old_s1 = new_s1;
+//		delay = Tick;
+//	}
 	if (Tick > off_time) {
 		LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
 	}
